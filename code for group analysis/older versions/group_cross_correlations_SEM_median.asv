@@ -1,0 +1,331 @@
+function [corr_structure,egg_structure] = group_cross_correlations_SEM_median(recordings_list, ROI_num, filter_out_chrimson_data, filter_chrimson_eggs, filter_out_egg_times, backsub)
+
+%time_interval = [-240:.1:240];
+time_interval = [-1200:.1:1200];
+
+% set filter chrimson data to 1 if yu want to remove all data during pulses
+% (as well as 100 sec after the pulse) check code for exact number
+
+% set filter chrimson eggs to remove all eggs in the same interval as above
+% 0 = no filter
+% 1 - filter out chrimson eggs
+% 2 - only use chrimson eggs
+
+% set ROI num to -1 if you want tu use CH1 patch
+% if patch is 1 then use CH1
+% if patch is 0 then use CH1 but remove pulses (and 100 seconds after)
+
+% set filter_out_egg_times to 1 if you don't want to have any of the egg
+% laying times inclued (currently 300 sec on either side of egg)
+%%%%%%%%%%%
+%% plotting correlations or time locked average
+for rec_index = 1:1:length(recordings_list)
+    
+    % it is often faster to use the stripped files without the associated
+    % images
+    modifiedStr = strrep([char(recordings_list(rec_index))], '.mat', '_stripped.mat');
+    %modifiedStr = [char(recordings_list(rec_index))];
+    recording = loadsinglerecording(modifiedStr);
+    [recording] = processes_more_DLC_variables(recording);
+    if(backsub == 1)
+        [recording] = replace_df_over_f_withbackgroundsubtracted(recording);
+    end
+    
+    if(ROI_num(rec_index) ==-1)
+        patch = 1;
+    else
+        patch = 0;
+    end
+    if(patch == 1)
+        recording.tseries = 1;
+    end
+    
+    % recording.abf.CH1_patch_spikes_conv = 50000.*recording.abf.CH1_patch_spikes_conv_area_rect'./5;
+    
+    %%% this loop below is common code with plot cross correlations %%
+    %% with one exception that is noted (a few lines added here, not in plot correlations)
+    
+    data_to_plain   = [];
+    data_to_sucrose = [];
+    
+    data_to_sucrose_control = [];
+    data_to_plain_control = [];
+    time_base_trans = [];
+    
+    data_around_egg_vel = [];
+    data_around_egg_vel_noave = [];
+    data_around_egg_speed_2hz_hold = [];
+    
+    
+    data_around_egg_fdoverf = [];
+    data_around_egg_fdoverf_mean = [];
+
+
+    data_around_plain_egg = [];
+    data_around_sucrose_egg = [];
+    time_base_egg = [];
+    data_around_egg_sub = [];
+    data_around_plain_egg_sub = [];
+    data_around_sucrose_egg_sub = [];
+    
+    data_around_egg_body = [];
+    data_around_egg_body_x = [];
+    data_around_egg_body_y = [];
+    
+    data_around_egg_prob = [];
+    data_around_egg_prob_x = [];
+    data_around_egg_prob_y = [];
+    
+    data_around_egg_path = [];
+    data_around_egg_body_only = [];
+    data_around_egg_body_only_x = [];
+    data_around_egg_body_only_y = [];
+    
+    data_around_egg_angle = [];
+    data_around_egg_angle_only = [];
+    
+    store_sucrose_mean = [];
+    store_plain_mean   = [];
+    store_sucrose_std  = [];
+    store_plain_std    = [];
+    
+    
+    % process more of the DLC movie
+    %[recording] = processes_more_DLC_variables(recording);
+    abd_only_length_x = recording.movie1.abd_x_L3tip./nanmedian(recording.movie1.abd_x_L3tip);
+    bodylength_x =  recording.movie1.abd_x_neck_tip./nanmedian(recording.movie1.abd_x_neck_tip);
+    abd_only_length_y = recording.movie1.abd_y_L3tip./nanmedian(recording.movie1.abd_y_L3tip);
+    bodylength_y =  recording.movie1.abd_y_neck_tip./nanmedian(recording.movie1.abd_y_neck_tip);
+    
+    prob_x =  recording.movie1.prob_x./nanmedian(recording.movie1.prob_x);
+    prob_y =  recording.movie1.prob_y./nanmedian(recording.movie1.prob_y);
+    
+    
+    movtime  = recording.movie1.time_stamps;
+    sucrose = recording.movie1.sucrose;
+    bodylength =  recording.movie1.abd_length./nanmedian(recording.movie1.abd_length);
+    bodyangle =  recording.movie1.abd_angle;
+    problength = recording.movie1.prob_length./nanmedian(recording.movie1.prob_length);
+    abd_path_length = recording.movie1.abd_path_length./nanmedian(recording.movie1.abd_path_length);
+    abd_only_length = recording.movie1.abd_only_length./nanmedian(recording.movie1.abd_only_length);
+    abd_only_angle = recording.movie1.abd_only_angle;
+    wheelvelocity = (pi*7*-25).*smooth([0; diff(unwrap(recording.movie1.filtered_wheel))],25) ./ (2*pi); %mm/sec 7mm radium
+    wheelvelocity_noave = (pi*7*-25).*[0; diff(unwrap(recording.movie1.filtered_wheel))]./ (2*pi); %mm/sec 7mm radium
+    
+    % this is new code to get a 2hz speed
+    tmp_unwrapped_wheel = unwrap(recording.movie1.filtered_wheel);
+    tmp_unwrapped_wheel_2hz = [];
+    tmp_valx =tmp_unwrapped_wheel(1);
+    % remaking a 2 hz array
+    for i = 1:1:length(tmp_unwrapped_wheel)
+        if(mod(i,25) == 13)
+            tmp_valx = (tmp_unwrapped_wheel(i)+tmp_unwrapped_wheel(i-1))./2;
+        end
+        if(mod(i,25) == 0)
+            tmp_valx = (tmp_unwrapped_wheel(i));
+        end
+        
+        tmp_unwrapped_wheel_2hz(i) = tmp_valx;
+    end
+    tmp_unwrapped_wheel_2hz_speed = [0, (pi*7*-25).*abs(diff(tmp_unwrapped_wheel_2hz))./ (2*pi)];
+    
+       
+    % this holds the value of the speed (so its not jumping between 0 and a
+    % value). Since we are holding we are dividing by 12.5
+    tmp_valsp = tmp_unwrapped_wheel_2hz_speed(1)./12.5;
+   speed_2hz_hold = [];
+    
+    for i = 1:1:length(tmp_unwrapped_wheel_2hz_speed)
+        if(tmp_unwrapped_wheel_2hz_speed(i) ~=0)
+            tmp_valsp = tmp_unwrapped_wheel_2hz_speed(i)./12.5;
+        end
+        speed_2hz_hold(i) = tmp_valsp;
+    end
+    speed_2hz_hold = -1.*speed_2hz_hold';
+     
+    if(filter_chrimson_eggs == 1)
+        recording.movie1.eggs = recording.movie1.eggs(recording.movie1.eggs_pulse == 0);
+    end
+    if(filter_chrimson_eggs == 2)
+        recording.movie1.eggs = recording.movie1.eggs(recording.movie1.eggs_pulse == 1);
+    end
+    
+    [a b] = find(recording.movie1.sucrose(recording.movie1.eggs) == 0);
+    plain_egg = recording.movie1.eggs(b);
+    plain_eggt = recording.movie1.time_stamps(recording.movie1.eggs(b));
+    
+    [a b] = find(recording.movie1.sucrose(recording.movie1.eggs) == 200 | recording.movie1.sucrose(recording.movie1.eggs) == 500 );
+    sucrose_egg = recording.movie1.eggs(b);
+    sucrose_eggt = recording.movie1.time_stamps(recording.movie1.eggs(b));
+    
+    [a b] = find(recording.movie1.sucrose(recording.movie1.eggs) >= 0);
+    all_egg = recording.movie1.eggs(b);
+    all_eggt = recording.movie1.time_stamps(recording.movie1.eggs(b));
+    
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,all_eggt, time_interval);
+    data_around_egg_sub = [data_around_egg_sub; data_to_average_interp];
+    time_base_egg = time_base_to_return;
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,plain_eggt, time_interval);
+    data_around_plain_egg_sub = [data_around_plain_egg_sub; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,sucrose_eggt, time_interval);
+    data_around_sucrose_egg_sub = [data_around_sucrose_egg_sub; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(wheelvelocity,movtime,all_eggt, time_interval);
+    data_around_egg_vel = [data_around_egg_vel; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(wheelvelocity_noave,movtime,all_eggt, time_interval);
+    data_around_egg_vel_noave = [data_around_egg_vel_noave; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(speed_2hz_hold,movtime,all_eggt, time_interval);
+    data_around_egg_speed_2hz_hold = [data_around_egg_speed_2hz_hold; data_to_average_interp];
+    
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(problength,movtime,all_eggt, time_interval);
+    data_around_egg_prob = [data_around_egg_prob; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(prob_x,movtime,all_eggt, time_interval);
+    data_around_egg_prob_x = [data_around_egg_prob_x; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(prob_y,movtime,all_eggt, time_interval);
+    data_around_egg_prob_y = [data_around_egg_prob_y; data_to_average_interp];
+    
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(bodylength,movtime,all_eggt, time_interval);
+    data_around_egg_body = [data_around_egg_body; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(bodylength_x,movtime,all_eggt, time_interval);
+    data_around_egg_body_x = [data_around_egg_body_x; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(bodylength_y,movtime,all_eggt, time_interval);
+    data_around_egg_body_y = [data_around_egg_body_y; data_to_average_interp];
+    
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(abd_path_length,movtime,all_eggt, time_interval);
+    data_around_egg_path = [data_around_egg_path; data_to_average_interp];
+    
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length,movtime,all_eggt, time_interval);
+    data_around_egg_body_only = [data_around_egg_body_only; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length_x,movtime,all_eggt, time_interval);
+    data_around_egg_body_only_x = [data_around_egg_body_only_x; data_to_average_interp];
+    
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length_y,movtime,all_eggt, time_interval);
+    data_around_egg_body_only_y = [data_around_egg_body_only_y; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(bodyangle,movtime,all_eggt, time_interval);
+    data_around_egg_angle = [data_around_egg_angle; data_to_average_interp];
+    
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_angle,movtime,all_eggt, time_interval);
+    data_around_egg_angle_only = [data_around_egg_angle_only; data_to_average_interp];
+    
+    data_around_sucrose_egg_sub = repmat(data_around_sucrose_egg_sub,length(recording.tseries),1);
+    data_around_egg_sub = repmat(data_around_egg_sub,length(recording.tseries),1);
+    data_around_plain_egg_sub = repmat(data_around_plain_egg_sub,length(recording.tseries),1);
+    
+    
+    
+    %% the lines below need to be added to newer versions of plots cross correlations
+    all_recordings_list = repmat(recordings_list(rec_index),length(recording.tseries),1);
+    all_eggs_listindex = repmat(all_egg,length(recording.tseries),1);
+    all_eggs_listtime = repmat(all_eggt,length(recording.tseries),1);
+    all_recordings_list_index = repmat(rec_index,length(recording.tseries),1);
+    all_ROI_index = repmat(ROI_num(rec_index),length(recording.tseries),1);
+    %%
+    
+    for m = 1:1:length(recording.tseries)
+        if(patch == 0)
+            signal    = recording.tseries(m).df_over_f(ROI_num(rec_index),:);
+            signaltime = recording.tseries(m).Time_s;
+            
+            if(filter_out_chrimson_data)
+                tseries_no_laser = interp1(recording.abf.Time_s, recording.abf.no_laser, recording.tseries(m).Time_s,'previous');
+                signal = signal.*tseries_no_laser';
+            end
+            
+            if(filter_out_egg_times)
+                tseries_no_egg = interp1(recording.movie1.time_stamps, recording.movie1.no_egg, recording.tseries(m).Time_s,'previous');
+                signal = signal.*tseries_no_egg';
+            end
+        end
+        
+        % for patching data, the signal changes
+        if(patch == 1)
+            signal    = recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+            signaltime = recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+            
+            if(filter_out_chrimson_data)
+                signal    = recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)).*recording.abf.no_laser(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+            end
+            
+            
+            
+            if(filter_out_egg_times)
+                disp 'Error this code has not been written'
+            end
+            
+        end
+        
+        
+        
+        
+        % look at signal at eggs
+        [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,all_eggt, time_interval);
+        data_around_egg = [data_around_egg; data_to_average_interp];
+        time_base_egg = time_base_to_return;
+        [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,plain_eggt, time_interval);
+        data_around_plain_egg = [data_around_plain_egg; data_to_average_interp];
+        [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,sucrose_eggt, time_interval);
+        data_around_sucrose_egg = [data_around_sucrose_egg; data_to_average_interp];
+        
+        
+        
+        
+    end
+    
+    %%%% the loop above can be replaced with new vweaions of the
+    %%%% plot_cross_correlation function. It is ahared
+    
+    egg_structure(rec_index).data_around_egg_sub = data_around_egg_sub;
+    egg_structure(rec_index).data_around_egg_vel = repmat(data_around_egg_vel,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_vel_noave = repmat(data_around_egg_vel_noave,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_speed_2hz_hold = repmat(data_around_egg_speed_2hz_hold,length(recording.tseries),1)';
+    
+    egg_structure(rec_index).data_around_egg_body = repmat(data_around_egg_body,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_body_x = repmat(data_around_egg_body_x,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_body_y = repmat(data_around_egg_body_y,length(recording.tseries),1)';
+    
+    egg_structure(rec_index).data_around_egg_prob = repmat(data_around_egg_prob,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_prob_x = repmat(data_around_egg_prob_x,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_prob_y = repmat(data_around_egg_prob_y,length(recording.tseries),1)';
+    
+    egg_structure(rec_index).data_around_egg_path = repmat(data_around_egg_path,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_body_only = repmat(data_around_egg_body_only,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_body_only_x = repmat(data_around_egg_body_only_x,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_body_only_y = repmat(data_around_egg_body_only_y,length(recording.tseries),1)';
+    
+    egg_structure(rec_index).data_around_egg_angle = repmat(data_around_egg_angle,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg_angle_only = repmat(data_around_egg_angle_only,length(recording.tseries),1)';
+    egg_structure(rec_index).data_around_egg = data_around_egg';
+    egg_structure(rec_index).recording = all_recordings_list;
+    egg_structure(rec_index).recording_index = all_recordings_list_index;
+    egg_structure(rec_index).egg_time = all_eggs_listtime;
+    egg_structure(rec_index).egg_index = all_eggs_listindex;
+    egg_structure(rec_index).ROI_used = all_ROI_index;
+    
+    
+    
+    
+    corr_structure(rec_index).recording = recordings_list(rec_index);
+    
+    
+    
+end
+
+
+end
