@@ -145,7 +145,7 @@ end
 % may need to adjust the trig array if there were aborted tseries etc
 
 %trig = [trig(1:(1250*15)),trig((end-15*2000+1):(end))];
-%trig = [trig(1:(16*5250))];
+%trig = [trig(1:(17*4042))];
 
 recording.abf.middle_of_trig = trig';
 
