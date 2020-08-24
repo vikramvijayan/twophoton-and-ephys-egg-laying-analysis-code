@@ -139,6 +139,7 @@ set(gca,'xlim',[min(recording.abf.Time_s), max(recording.abf.Time_s)])
 
 
 yyaxis right; hold on;
+plot(recording.abf.Time_s, (recording.abf.PWMlaser)./5,'b');
 
 if (ROI_num > 0)
     ylabel('df over f');

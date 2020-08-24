@@ -2,8 +2,8 @@ function [recording] = convert_PWMlaser_to_power(recording)
 
 % calibration table for chrimson 655nm in uW/mm2
 % 11/13/2019 values
-PWM_level =   [1,   .5,  .25, .2,  .1,  .05, .025, .01];
-uWmm2_level = [650, 380, 250, 230, 157, 135, 130, 115];
+PWM_level =   [1,   .5,  .25, .2,  .1,  .05, .025, .01, 0];
+uWmm2_level = [650, 380, 250, 230, 157, 135, 130, 115, 0];
 
 % % calivration for 595 nm on 11/27 [this is a bit off from what I wrote in
 % % the file but it is fine]
@@ -46,7 +46,7 @@ end
 recording.abf.pulse_OFF_times = tmp_times;
 
 
-smoothed_PWMlaser = smooth(recording.abf.PWMlaser,1000);
+smoothed_PWMlaser = smooth(recording.abf.PWMlaser,2000);
 
 recording.abf.PWMlaser_uWpermm2 = zeros(length(recording.abf.PWMlaser),1);
 for i = 1:1:length(recording.abf.pulse_ON_times)

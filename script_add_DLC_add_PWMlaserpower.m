@@ -1,4 +1,4 @@
-%script to process new DLC and conver PWM lasr to power
+%script to process new DLC and conver PWM laser to power
 
 for i = 1:1:length(files)
     load(files(i).name);
