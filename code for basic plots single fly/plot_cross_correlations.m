@@ -1,5 +1,11 @@
 function [out] = plot_cross_correlations(recording, ROI_num, filter_out_chrimson_data, filter_chrimson_eggs)
 
+%% make sure to set the time interval for the calculations (triggered averages)
+time_interval = [-240:.1:240];
+
+%% make sure to set the time interval for cross correaltions
+time_interval_corr = [-120:.1:120];
+
 
 % set filter chrimson data to 1 if yu want to remove all data during pulses
 % (as well as 100 sec after the pulse) check code for exact number
@@ -34,6 +40,10 @@ data_to_plain_control = [];
 time_base_trans = [];
 
 data_around_egg_vel = [];
+data_around_egg_vel_noave = [];
+data_around_egg_speed_2hz_hold = [];
+
+    
 
 data_around_egg = [];
 data_around_plain_egg = [];
@@ -68,6 +78,9 @@ data_around_plain_egg_sub2 = [];
 data_around_sucrose_egg_sub2 = [];
 
 corr_to_vel = [];
+corr_to_vel_noave = [];
+corr_to_speed_2hz_hold = [];
+
 time_base_corr_to_vel = [];
 
 corr_to_body = [];
@@ -128,7 +141,8 @@ abd_path_length = recording.movie1.abd_path_length;
 abd_only_length = recording.movie1.abd_only_length;
 abd_only_angle = recording.movie1.abd_only_angle;
 wheelvelocity = (pi*7*-25).*smooth([0; diff(unwrap(recording.movie1.filtered_wheel))],25) ./ (2*pi); %mm/sec 7mm radium
-
+  wheelvelocity_noave = (pi*7*-25).*[0; diff(unwrap(recording.movie1.filtered_wheel))]./ (2*pi); %mm/sec 7mm radium
+  
 % process more of the DLC movie
 %[recording] = processes_more_DLC_variables(recording);
 abd_only_length_x = recording.movie1.abd_x_L3tip;
@@ -139,6 +153,40 @@ bodylength_y =  recording.movie1.abd_y_neck_tip;
 prob_x =  recording.movie1.prob_x;
 prob_y =  recording.movie1.prob_y;
 
+    %% this is new code to get a 2hz speed
+    tmp_unwrapped_wheel = unwrap(recording.movie1.filtered_wheel);
+    tmp_unwrapped_wheel_2hz = [];
+    tmp_valx =tmp_unwrapped_wheel(1);
+    
+    % remaking a 2 hz array
+    for i = 1:1:length(tmp_unwrapped_wheel)
+        if(mod(i,25) == 13)
+            tmp_valx = (tmp_unwrapped_wheel(i)+tmp_unwrapped_wheel(i-1))./2;
+        end
+        if(mod(i,25) == 0)
+            tmp_valx = (tmp_unwrapped_wheel(i));
+        end
+        
+        tmp_unwrapped_wheel_2hz(i) = tmp_valx;
+    end
+    tmp_unwrapped_wheel_2hz_speed = [0, (pi*7*-25).*abs(diff(tmp_unwrapped_wheel_2hz))./ (2*pi)];
+    
+      % this holds the value of the speed (so its not jumping between 0 and a
+    % value). Since we are holding we are dividing by 12.5
+    tmp_valsp = tmp_unwrapped_wheel_2hz_speed(1)./12.5;
+    speed_2hz_hold = [];
+    
+    for i = 1:1:length(tmp_unwrapped_wheel_2hz_speed)
+        if(tmp_unwrapped_wheel_2hz_speed(i) ~=0)
+            tmp_valsp = tmp_unwrapped_wheel_2hz_speed(i)./12.5;
+        end
+        speed_2hz_hold(i) = tmp_valsp;
+    end
+    speed_2hz_hold = -1.*speed_2hz_hold';
+    
+        % prevent errant issues
+    speed_2hz_hold(speed_2hz_hold>5) = 0;
+    
 
 if(filter_chrimson_eggs == 1)
     recording.movie1.eggs = recording.movie1.eggs(recording.movie1.eggs_pulse == 0);
@@ -162,68 +210,66 @@ all_egg = recording.movie1.eggs(b);
 all_eggt = recording.movie1.time_stamps(recording.movie1.eggs(b));
 
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,all_eggt, time_interval);
 data_around_egg_sub = [data_around_egg_sub; data_to_average_interp];
 time_base_egg = time_base_to_return;
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,plain_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,plain_eggt, time_interval);
 data_around_plain_egg_sub = [data_around_plain_egg_sub; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,sucrose_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,sucrose_eggt, time_interval);
 data_around_sucrose_egg_sub = [data_around_sucrose_egg_sub; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(wheelvelocity,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(wheelvelocity,movtime,all_eggt, time_interval);
 data_around_egg_vel = [data_around_egg_vel; data_to_average_interp];
-
-
-[time_base_to_return, data_to_average_interp]  = average_around_event(problength,movtime,all_eggt, [-240:.1:240]);
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(wheelvelocity_noave,movtime,all_eggt, time_interval);
+    data_around_egg_vel_noave = [data_around_egg_vel_noave; data_to_average_interp];
+    
+    [time_base_to_return, data_to_average_interp]  = average_around_event(speed_2hz_hold,movtime,all_eggt, time_interval);
+    data_around_egg_speed_2hz_hold = [data_around_egg_speed_2hz_hold; data_to_average_interp];
+    
+[time_base_to_return, data_to_average_interp]  = average_around_event(problength,movtime,all_eggt, time_interval);
 data_around_egg_prob = [data_around_egg_prob; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(prob_x,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(prob_x,movtime,all_eggt, time_interval);
 data_around_egg_prob_x = [data_around_egg_prob_x; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(prob_y,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(prob_y,movtime,all_eggt, time_interval);
 data_around_egg_prob_y = [data_around_egg_prob_y; data_to_average_interp];
 
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(bodylength,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(bodylength,movtime,all_eggt, time_interval);
 data_around_egg_body = [data_around_egg_body; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(bodylength_x,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(bodylength_x,movtime,all_eggt, time_interval);
 data_around_egg_body_x = [data_around_egg_body_x; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(bodylength_y,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(bodylength_y,movtime,all_eggt, time_interval);
 data_around_egg_body_y = [data_around_egg_body_y; data_to_average_interp];
 
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(abd_path_length,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(abd_path_length,movtime,all_eggt, time_interval);
 data_around_egg_path = [data_around_egg_path; data_to_average_interp];
 
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length,movtime,all_eggt, time_interval);
 data_around_egg_body_only = [data_around_egg_body_only; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length_x,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length_x,movtime,all_eggt, time_interval);
 data_around_egg_body_only_x = [data_around_egg_body_only_x; data_to_average_interp];
 
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length_y,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_length_y,movtime,all_eggt, time_interval);
 data_around_egg_body_only_y = [data_around_egg_body_only_y; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(bodyangle,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(bodyangle,movtime,all_eggt, time_interval);
 data_around_egg_angle = [data_around_egg_angle; data_to_average_interp];
 
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_angle,movtime,all_eggt, [-240:.1:240]);
+[time_base_to_return, data_to_average_interp]  = average_around_event(abd_only_angle,movtime,all_eggt, time_interval);
 data_around_egg_angle_only = [data_around_egg_angle_only; data_to_average_interp];
 
-[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,all_eggt, [-120:.1:120]);
-data_around_egg_sub2 = [data_around_egg_sub2; data_to_average_interp];
-time_base_egg = time_base_to_return;
-[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,plain_eggt, [-120:.1:120]);
-data_around_plain_egg_sub2 = [data_around_plain_egg_sub2; data_to_average_interp];
-[time_base_to_return, data_to_average_interp]  = average_around_event(sucrose,movtime,sucrose_eggt, [-120:.1:120]);
-data_around_sucrose_egg_sub2 = [data_around_sucrose_egg_sub2; data_to_average_interp];
 
 data_around_sucrose_egg_sub = repmat(data_around_sucrose_egg_sub,length(recording.tseries),1);
 data_around_egg_sub = repmat(data_around_egg_sub,length(recording.tseries),1);
@@ -246,9 +292,12 @@ for m = 1:1:length(recording.tseries)
     
     % for patching data, the signal changes
     if(patch == 1)
-        signal    = recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+        %signal    = recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
         signaltime = recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
         
+         signal    = recording.abf.CH1_patch(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13;
+         signal    = recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+
         if(filter_out_chrimson_data)
             signal    = recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)).*recording.abf.no_laser(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
         end
@@ -256,97 +305,83 @@ for m = 1:1:length(recording.tseries)
     end
     
     
-    
-    wheelvelocity = (pi*7*-25).*smooth([0; diff(unwrap(recording.movie1.filtered_wheel))],25) ./ (2*pi); %mm/sec 7mm radium
-    bodylength =  recording.movie1.abd_length;
-    bodyangle =  recording.movie1.abd_angle;
-    abd_path_length = recording.movie1.abd_path_length;
-    abd_only_length = recording.movie1.abd_only_length;
-    abd_only_angle = recording.movie1.abd_only_angle;
-    abd_only_length_x = recording.movie1.abd_x_L3tip;
-    bodylength_x =  recording.movie1.abd_x_neck_tip;
-    abd_only_length_y = recording.movie1.abd_y_L3tip;
-    bodylength_y =  recording.movie1.abd_y_neck_tip;
-    prob_x =  recording.movie1.prob_x;
-    prob_y =  recording.movie1.prob_y;
-    problength = recording.movie1.prob_length;
+
     
     % look at signal at eggs
-    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,all_eggt, [-240:.1:240]);
+    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,all_eggt, time_interval);
     data_around_egg = [data_around_egg; data_to_average_interp];
     time_base_egg = time_base_to_return;
-    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,plain_eggt, [-240:.1:240]);
+    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,plain_eggt, time_interval);
     data_around_plain_egg = [data_around_plain_egg; data_to_average_interp];
-    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,sucrose_eggt, [-240:.1:240]);
+    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,sucrose_eggt, time_interval);
     data_around_sucrose_egg = [data_around_sucrose_egg; data_to_average_interp];
     
-    % look at signal at eggs
-    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,all_eggt, [-120:.1:120]);
-    data_around_egg2 = [data_around_egg2; data_to_average_interp];
-    time_base_egg2 = time_base_to_return;
-    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,plain_eggt, [-120:.1:120]);
-    data_around_plain_egg2 = [data_around_plain_egg2; data_to_average_interp];
-    [time_base_to_return, data_to_average_interp]  = average_around_event(signal,signaltime,sucrose_eggt, [-120:.1:120]);
-    data_around_sucrose_egg2 = [data_around_sucrose_egg2; data_to_average_interp];
+
     
     % look at signal correlated to velocity (smoothed)
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, wheelvelocity, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, wheelvelocity, signaltime, movtime, time_interval_corr);
     corr_to_vel = [corr_to_vel; out_corr];
     time_base_corr_to_vel = out_corr_shift_ofvec1;
     
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, wheelvelocity_noave, signaltime, movtime, time_interval_corr);
+    corr_to_vel_noave = [corr_to_vel_noave; out_corr];
+    
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, speed_2hz_hold, signaltime, movtime, time_interval_corr);
+    corr_to_speed_2hz_hold = [corr_to_speed_2hz_hold; out_corr];
+    
     % look at signal correlated to body position
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, problength, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, problength, signaltime, movtime, time_interval_corr);
     corr_to_prob = [corr_to_prob; out_corr];
     time_base_corr_to_prob = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, prob_x, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, prob_x, signaltime, movtime, time_interval_corr);
     corr_to_prob_x = [corr_to_prob_x; out_corr];
     time_base_corr_to_prob = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, prob_y, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, prob_y, signaltime, movtime, time_interval_corr);
     corr_to_prob_y = [corr_to_prob_y; out_corr];
     time_base_corr_to_prob = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength, signaltime, movtime, time_interval_corr);
     corr_to_body = [corr_to_body; out_corr];
     time_base_corr_to_body = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength_x, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength_x, signaltime, movtime, time_interval_corr);
     corr_to_body_x = [corr_to_body_x; out_corr];
     time_base_corr_to_body = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength_y, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength_y, signaltime, movtime, time_interval_corr);
     corr_to_body_y = [corr_to_body_y; out_corr];
     time_base_corr_to_body = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodyangle, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodyangle, signaltime, movtime, time_interval_corr);
     corr_to_angle = [corr_to_angle; out_corr];
     time_base_corr_to_angle = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_path_length, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_path_length, signaltime, movtime, time_interval_corr);
     corr_to_body_path = [corr_to_body_path; out_corr];
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length, signaltime, movtime, time_interval_corr);
     corr_to_body_only = [corr_to_body_only; out_corr];
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length_x, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length_x, signaltime, movtime, time_interval_corr);
     corr_to_body_only_x = [corr_to_body_only_x; out_corr];
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length_y, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length_y, signaltime, movtime, time_interval_corr);
     corr_to_body_only_y = [corr_to_body_only_y; out_corr];
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_angle, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_angle, signaltime, movtime, time_interval_corr);
     corr_to_angle_only = [corr_to_angle_only; out_corr];
     
     % look at signal correlated to substrate
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, sucrose, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, sucrose, signaltime, movtime, time_interval_corr);
     corr_to_sucrose = [corr_to_sucrose; out_corr];
     time_base_corr_to_sucrose = out_corr_shift_ofvec1;
     
     % look at signal correlated to substrate threshold
     suc_thr = sucrose;
     suc_thr(suc_thr>0) = 1;
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, suc_thr, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, suc_thr, signaltime, movtime, time_interval_corr);
     corr_to_sucrose_t = [corr_to_sucrose_t; out_corr];
     time_base_corr_to_sucrose_t = out_corr_shift_ofvec1;
     
@@ -354,7 +389,7 @@ for m = 1:1:length(recording.tseries)
     tmp_ar = zeros(1,length(movtime));
     tmp_ar(all_egg) = 1;
     tmp_ar = smooth(tmp_ar,25*10);
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, time_interval_corr);
     corr_to_egg = [corr_to_egg; out_corr];
     time_base_corr_to_egg = out_corr_shift_ofvec1;
     
@@ -362,7 +397,7 @@ for m = 1:1:length(recording.tseries)
     tmp_ar = zeros(1,length(movtime));
     tmp_ar(plain_egg) = 1;
     tmp_ar = smooth(tmp_ar,25*10);
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, time_interval_corr);
     corr_to_plainegg = [corr_to_plainegg; out_corr];
     time_base_corr_to_plainegg = out_corr_shift_ofvec1;
     
@@ -370,7 +405,7 @@ for m = 1:1:length(recording.tseries)
     tmp_ar = zeros(1,length(movtime));
     tmp_ar(sucrose_egg) = 1;
     tmp_ar = smooth(tmp_ar,25*10);
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, time_interval_corr);
     corr_to_sucroseegg = [corr_to_sucroseegg; out_corr];
     time_base_corr_to_sucroseegg = out_corr_shift_ofvec1;
     
@@ -389,11 +424,11 @@ for m = 1:1:length(recording.tseries)
     transitionssigned(b) = -1;
     transitionssigned = smooth(transitionssigned,10*25);
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal,[0;transitionssigned], signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal,[0;transitionssigned], signaltime, movtime, time_interval_corr);
     corr_to_trans = [corr_to_trans; out_corr];
     time_base_corr_to_trans = out_corr_shift_ofvec1;
     
-    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal,[0;transitionsabsval], signaltime, movtime, [-120:.1:120]);
+    [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal,[0;transitionsabsval], signaltime, movtime, time_interval_corr);
     corr_to_absvaltrans = [corr_to_absvaltrans; out_corr];
     time_base_corr_to_absvaltrans = out_corr_shift_ofvec1;
 end
@@ -407,6 +442,23 @@ xlabel('shift signal, correlate to smoothed velocity'); %since peak is neg, patc
 axis manual;
 line('Xdata',[0,0],'YData',[-100,100],'Color','c');
 
+figure; hold on;  title([recording.abfname ',ROI ' num2str(ROI_num)],'Interpreter','none');
+set(gca,'TickDir','out');
+plot(time_base_corr_to_vel,corr_to_speed_2hz_hold,'color',[.75,.75,.75]);
+plot(time_base_corr_to_vel,nanmean(corr_to_speed_2hz_hold),'-k');
+ylabel('corr coeff');
+xlabel('shift signal, correlate to 2hz hold speed'); %since peak is neg, patch comes first. however...
+axis manual;
+line('Xdata',[0,0],'YData',[-100,100],'Color','c');
+
+figure; hold on;  title([recording.abfname ',ROI ' num2str(ROI_num)],'Interpreter','none');
+set(gca,'TickDir','out');
+plot(time_base_corr_to_vel,corr_to_vel_noave,'color',[.75,.75,.75]);
+plot(time_base_corr_to_vel,nanmean(corr_to_vel_noave),'-k');
+ylabel('corr coeff');
+xlabel('shift signal, correlate to velocity'); %since peak is neg, patch comes first. however...
+axis manual;
+line('Xdata',[0,0],'YData',[-100,100],'Color','c');
 
 figure; hold on; title([recording.abfname ',ROI ' num2str(ROI_num)],'Interpreter','none');
 set(gca,'TickDir','out');
@@ -918,86 +970,6 @@ axis manual;
 line('Xdata',[0,0],'YData',[-100,100],'Color','c');
 
 %%%%%%%%%%
-
-%plot signal around egg
-
-average1 = nanmean(data_around_plain_egg2,1);
-average2 = nanmean(data_around_sucrose_egg2,1);
-average3 = nanmean(data_around_egg2,1);
-
-r1 = 0;
-r2 = 0;
-r3 = 0;
-
-figure; hold on; title([recording.abfname ',ROI ' num2str(ROI_num)],'Interpreter','none');
-xlabel('average signal around eggs laid on plain');
-
-if(~isempty(data_around_plain_egg2))
-    [r,c] = size(data_around_plain_egg2);
-    for sizes = 1:1:r
-        for lineseg = 1 : (length(data_around_plain_egg2)-1)
-            if(~isnan(data_around_plain_egg_sub2(sizes,lineseg)))
-                line('XData',time_base_egg2(lineseg:lineseg+1), 'YData',data_around_plain_egg2(sizes,lineseg:lineseg+1), 'Color',clrzz(data_around_plain_egg_sub2(sizes,lineseg)./100+1,:));
-            end
-        end
-    end
-end
-
-if(~isempty(data_around_plain_egg2))
-    hold on;
-    plot(time_base_egg2,average1,'k'); % egg plain
-    data_around_plain_egg2(~any(~isnan(data_around_plain_egg2), 2),:)=[];
-    [r1] = sum(~isnan(data_around_plain_egg2(:,1201)));
-end
-
-ylabel([num2str(r1) ' eggs laid on plain']);
-axis manual;
-line('Xdata',[0,0],'YData',[-100,100],'Color','c');
-
-figure; hold on; title([recording.abfname ',ROI ' num2str(ROI_num)],'Interpreter','none');
-xlabel('average signal around eggs laid on sucrose');
-
-if(~isempty(data_around_sucrose_egg2))
-    [r,c] = size(data_around_sucrose_egg2);
-    for sizes = 1:1:r
-        for lineseg = 1 : (length(data_around_sucrose_egg2)-1)
-            if(~isnan(data_around_sucrose_egg_sub2(sizes,lineseg)))
-                line('XData',time_base_egg2(lineseg:lineseg+1), 'YData',data_around_sucrose_egg2(sizes,lineseg:lineseg+1), 'Color',clrzz(data_around_sucrose_egg_sub2(sizes,lineseg)./100+1,:));
-            end
-        end
-    end
-end
-
-if(~isempty(data_around_sucrose_egg2))
-    hold on;
-    plot(time_base_egg2,average2,'k');% egg sucrose
-    data_around_sucrose_egg2(~any(~isnan(data_around_sucrose_egg2), 2),:)=[];
-    [r2] = sum(~isnan(data_around_sucrose_egg2(:,1201)));
-end
-
-ylabel([num2str(r2) ' eggs laid on sucrose']);
-axis manual;
-line('Xdata',[0,0],'YData',[-100,100],'Color','c');
-
-figure; hold on; title([recording.abfname ',ROI ' num2str(ROI_num)],'Interpreter','none');
-xlabel('average signal around eggs');
-
-if(~isempty(data_around_egg2))
-    hold on;
-    [r,c] = size(data_around_egg2);
-    for sizes = 1:1:r
-        for lineseg = 1 : (length(data_around_egg2)-1)
-            line('XData',time_base_egg2(lineseg:lineseg+1), 'YData',data_around_egg2(sizes,lineseg:lineseg+1), 'Color',[.5 .5 .5]);
-        end
-    end
-    plot(time_base_egg2,average3,'Color','k'); % egg
-    data_around_egg(any(isnan(data_around_egg), 2),:)=[];
-    [r3,c] = size(data_around_egg2);
-end
-
-ylabel([num2str(r1+r2) ' total eggs']);
-axis manual;
-line('Xdata',[0,0],'YData',[-100,100],'Color','c');
 
 end
 

@@ -462,9 +462,12 @@ if(~isempty(movie1))
         
         
         [bodypart]= importDeepLabCutfile_VV(modifiedStr, 4, inf);
+        
+        %bodypart(2:19,1:200) = NaN;
+        
         recording.movie1.DLC = bodypart(2:19,:);
         
-        
+
         recording.movie1.abd_length = sqrt( (recording.movie1.DLC(1,:)-recording.movie1.DLC(13,:)).^2 +(recording.movie1.DLC(2,:)-recording.movie1.DLC(14,:)).^2);
         recording.movie1.abd_angle = atan( ( (recording.movie1.DLC(2,:)-recording.movie1.DLC(14,:))) ./ ((recording.movie1.DLC(13,:)-recording.movie1.DLC(1,:))));
         
@@ -583,7 +586,12 @@ if(~isempty(movie2))
     else
         modifiedStr = strrep([recording.movie2.filename(1:1:end-6) 'DeepCut_resnet50_GPU_05062019BMay6shuffle1_1030000.csv'], '.avi', '');
         [bodypart]= importDeepLabCutfile_VV(modifiedStr, 4, inf);
+        
+                  %bodypart(2:13,1:200) = NaN;
+
         recording.movie2.DLC = bodypart(2:13,:);
+             
+
         recording.movie2.time_stamps = recording.cam.Time_s((end-length(recording.movie2.time_stamps)+1):1:end);
     end
     disp(['movie2 extra DLC ' num2str(length(bodypart(2,:)) - length(recording.movie2.time_stamps))]);
@@ -683,6 +691,15 @@ else
         sucrose(a) = 200;
     end
     
+    if(substrate_vector == [500,500,0])
+        [a b] = find(filter_wheel_DLC >  0);
+        sucrose(a) = 0;
+        [a b] = find(filter_wheel_DLC > 2*pi/3);
+        sucrose(a) = 500;
+        [a b] = find(filter_wheel_DLC > 4*pi/3);
+        sucrose(a) = 500;
+    end
+    
     if(substrate_vector == [0,0,500])
         [a b] = find(filter_wheel_DLC >  0);
         sucrose(a) = 500;
@@ -710,6 +727,14 @@ else
         sucrose(a) = 0;
     end
     
+        if(substrate_vector == [500,0,500])
+        [a b] = find(filter_wheel_DLC >  0);
+        sucrose(a) = 500;
+        [a b] = find(filter_wheel_DLC > 2*pi/3);
+        sucrose(a) = 0;
+        [a b] = find(filter_wheel_DLC > 4*pi/3);
+        sucrose(a) = 500;
+    end
     
     if(substrate_vector == [0,0,0])
         [a b] = find(filter_wheel_DLC >  0);

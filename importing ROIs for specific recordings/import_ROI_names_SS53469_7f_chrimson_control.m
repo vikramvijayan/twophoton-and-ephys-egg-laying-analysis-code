@@ -1,6 +1,6 @@
 % this code is meant to help get the right ROIs for anaysis
 % ROIsSS53469 is the imported table (from xlx using string)
-function [rec_list, ROI_list] = import_ROI_names_SS53469_7f_chrimson_control(ROIsSS53469, whatdoyouwant)
+function [rec_list, ROI_list, fly_ID, cell_ID] = import_ROI_names_SS53469_7f_chrimson_control(ROIsSS53469, whatdoyouwant)
 
 %function [recording] = make_small_recording_group()
 
@@ -10,8 +10,13 @@ recording_list = {'2020_07_14_0001.mat',...
 '2020_07_14_0004.mat',...
 '2020_07_14_0005.mat',...
 '2020_07_15_0001.mat',...
-'2020_07_15_0002.mat'};
-
+'2020_07_15_0002.mat',...
+'2020_10_21_0000.mat',...
+'2020_10_22_0001.mat',...
+'2020_10_22_0002.mat',...
+'2020_10_22_0005.mat',...
+'2020_10_22_0006.mat',...
+'2020_10_23_0005.mat'};
 
 % imported ROIsSS53469 as string
 
@@ -25,6 +30,8 @@ for i = 1:1:length(recording_list)
     ROI(i).leftneck = str2num(ROIsSS53469(i,7));
     ROI(i).rightneck = str2num(ROIsSS53469(i,8));
     ROI(i).combinedneck = str2num(ROIsSS53469(i,9));
+    ROI(i).cellID = str2num(ROIsSS53469(i,11));
+    ROI(i).flyID = str2num(ROIsSS53469(i,12));
     
     %
     %     if(isempty(ROI(i).leftcell))
@@ -68,22 +75,38 @@ if(strcmp(whatdoyouwant,'cell'))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
         for j = 1:1:length(ROI(i).rightcell)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
         for j = 1:1:length(ROI(i).leftcelldim)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
         for j = 1:1:length(ROI(i).rightcelldim)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
     end
 end
 
@@ -97,6 +120,8 @@ if(strcmp(whatdoyouwant,'only_one_cell'))
                 rec_list{cnt} = char(recording_list(i));
                 ROI_list(cnt) = ROI(i).leftcell(j);
                 cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
             end
         end
         for j = 1:1:length(ROI(i).rightcell)
@@ -105,6 +130,8 @@ if(strcmp(whatdoyouwant,'only_one_cell'))
                 rec_list{cnt} = char(recording_list(i));
                 ROI_list(cnt) = ROI(i).rightcell(j);
                 cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
             end
         end
         for j = 1:1:length(ROI(i).leftcelldim)
@@ -113,6 +140,8 @@ if(strcmp(whatdoyouwant,'only_one_cell'))
                 rec_list{cnt} = char(recording_list(i));
                 ROI_list(cnt) = ROI(i).leftcelldim(j);
                 cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
             end
         end
         for j = 1:1:length(ROI(i).rightcelldim)
@@ -121,6 +150,8 @@ if(strcmp(whatdoyouwant,'only_one_cell'))
                 rec_list{cnt} = char(recording_list(i));
                 ROI_list(cnt) = ROI(i).rightcelldim(j);
                 cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
             end
         end
     end
@@ -134,14 +165,22 @@ if(strcmp(whatdoyouwant,'anyleftcell'))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-      
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
         for j = 1:1:length(ROI(i).leftcelldim)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-     
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
     end
 end
 
@@ -151,14 +190,22 @@ if(strcmp(whatdoyouwant,'anyrightcell'))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-      
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
         for j = 1:1:length(ROI(i).rightcelldim)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-     
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
     end
 end
 
@@ -169,14 +216,19 @@ if(strcmp(whatdoyouwant,'anybrightcell'))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-      
+        ROI(i).cellID(1) = ROI(i).cellID(1)+1e6;
+        
         for j = 1:1:length(ROI(i).leftcell)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-     
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
     end
 end
 
@@ -186,13 +238,20 @@ if(strcmp(whatdoyouwant,'anydimcell'))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-      
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
         for j = 1:1:length(ROI(i).leftcelldim)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcelldim(j);
-        end   
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
     end
 end
 
@@ -202,13 +261,21 @@ if(strcmp(whatdoyouwant,'anyneckside'))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightneck(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-      
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
         for j = 1:1:length(ROI(i).leftneck)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftneck(j);
-        end   
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
     end
 end
 
@@ -218,13 +285,21 @@ if(strcmp(whatdoyouwant,'anyneurite'))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightneurite(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-      
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
         for j = 1:1:length(ROI(i).leftneurite)
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftneurite(j);
-        end   
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
     end
 end
 

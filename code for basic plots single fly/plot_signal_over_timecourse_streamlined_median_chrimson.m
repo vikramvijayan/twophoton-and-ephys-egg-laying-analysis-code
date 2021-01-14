@@ -99,6 +99,10 @@ if (ROI_num > 0)
         plot(recording.tseries(i).Time_s,(recording.tseries(i).df_over_f(ROI_num,:))./nanmean((recording.tseries(i).df_over_f(ROI_num,:))),'-','color','k')
     end
 else
+    
+%             ylabel('Vm corrected (mV)');
+%         plot(recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),recording.abf.CH1_patch(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13,'-','color','k')
+%     
     ylabel('spikes per sec');
     plot(recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),10000.*recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),'-','color','k')
 
@@ -132,14 +136,14 @@ set(gca,'xticklabel',{[]});
 yyaxis left; hold on;
 ylabel('laserpower');
 
-plot(recording.abf.Time_s, recording.abf.PWMlaser_uWpermm2,'c');
+%plot(recording.abf.Time_s, recording.abf.PWMlaser_uWpermm2,'c');
 
 set(gca,'xlim',[min(recording.abf.Time_s), max(recording.abf.Time_s)])
 
 
 
 yyaxis right; hold on;
-plot(recording.abf.Time_s, (recording.abf.PWMlaser)./5,'b');
+%plot(recording.abf.Time_s, (recording.abf.PWMlaser)./5,'b');
 
 if (ROI_num > 0)
     ylabel('df over f');
@@ -148,9 +152,12 @@ if (ROI_num > 0)
         plot(recording.tseries(i).Time_s,(recording.tseries(i).df_over_f(ROI_num,:))./nanmean((recording.tseries(i).df_over_f(ROI_num,:))),'-','color','k')
     end
 else
-    ylabel('spikes per sec');
-    
-    plot(recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),10000.*recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),'-','color','k')
+        ylabel('Vm corrected (mV)');
+       % plot(recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),recording.abf.CH1_patch(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13,'-','color','k')
+            plot(recording.abf.Time_s(recording.time_to_use(1)*10000:10:floor(recording.time_to_use(2)*10000)),recording.abf.CH1_patch(recording.time_to_use(1)*10000:10:floor(recording.time_to_use(2)*10000))-13,'-','color','k')
+
+        %ylabel('spikes per sec');
+   % plot(recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),10000.*recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)),'-','color','k')
 end
 
 

@@ -1,4 +1,4 @@
-function [corr_structure] = group_cross_correlations_correveryothercell(recordings_list, ROI_num, backsub)
+function [corr_structure] = group_cross_correlations_correveryothercell(recordings_list, ROI_num, fly_ID, cell_ID, backsub)
 
 %% plotting correlations or time locked average
 
@@ -18,6 +18,15 @@ for rec_index = 1:2:length(recordings_list)
     if(backsub == 1)
         [recording] = replace_df_over_f_withbackgroundsubtracted(recording);
     end
+    
+          if(backsub == 2)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmean(recording);
+        end
+        
+          if(backsub == 3)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmean2(recording);
+          end
+          
     
     patch = ~ROI_num(rec_index);
     
@@ -50,6 +59,10 @@ for rec_index = 1:2:length(recordings_list)
     corr_structure(rec_index).ROI_used = ROI_num(rec_index);
     corr_structure(rec_index).corr_to_signal = nanmean(corr_of_signals,1)';
     corr_structure(rec_index).time_base_corr = time_base_corr;
+        corr_structure(rec_index).fly_ID = fly_ID(rec_index);
+
+            corr_structure(rec_index).cell_ID = cell_ID(rec_index);
+
     
 end
 end

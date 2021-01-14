@@ -1,4 +1,4 @@
-function [corr_structure,pulse_structure] = group_cross_correlations_and_triggered_averages_SEM_pulse(recordings_list, ROI_num, min_power, max_power, filter_out_pulse, backsub, pulse_duration_min,pulse_duration_max)
+function [corr_structure,pulse_structure] = group_cross_correlations_and_triggered_averages_SEM_pulse(recordings_list, ROI_num,  fly_ID, cell_ID,min_power, max_power, filter_out_pulse, backsub, pulse_duration_min,pulse_duration_max)
 
 %% there is no corr_structure outputted
 
@@ -37,6 +37,9 @@ for rec_index = 1:1:length(recordings_list)
     
     if(backsub == 1)
         [recording] = replace_df_over_f_withbackgroundsubtracted(recording);
+    end
+    if(backsub == 2)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmeanexcludep(recording);
     end
     if(ROI_num(rec_index) ==-1)
         patch = 1;
@@ -161,7 +164,7 @@ for rec_index = 1:1:length(recordings_list)
     [a b] = find(temp_diffs > 2);
     a=a+1;
     temp_diffs2 = diff(a);
-    [a1 b1] = find(temp_diffs2 > 1000);
+    [a1 b1] = find(temp_diffs2 > 10000);
     if(~isempty(a))
         tmp_times = [a(1); a(a1+1)];
     else
@@ -179,7 +182,7 @@ for rec_index = 1:1:length(recordings_list)
     temp_diffs = diff(recording.abf.PWMlaser);
     [a b] = find(temp_diffs < -2);
     temp_diffs2 = diff(a);
-    [a1 b1] = find(temp_diffs2 > 1000);
+    [a1 b1] = find(temp_diffs2 > 10000);
     if(~isempty(a))
         tmp_times = [a(a1); a(end)];
     else
@@ -333,6 +336,9 @@ for rec_index = 1:1:length(recordings_list)
     all_recordings_list_index = repmat(rec_index,length(recording.tseries),1);
     all_ROI_index = repmat(ROI_num(rec_index),length(recording.tseries),1);
     
+     all_cellID_list = repmat(cell_ID(rec_index),length(recording.tseries),1);
+    all_flyID_list = repmat(fly_ID(rec_index),length(recording.tseries),1);
+    
     for m = 1:1:length(recording.tseries)
         if(patch == 0)
             signal = recording.tseries(m).df_over_f(ROI_num(rec_index),:);
@@ -413,6 +419,10 @@ for rec_index = 1:1:length(recordings_list)
     pulse_structure(rec_index).data_around_pulse_angle = repmat(data_around_pulse_angle,length(recording.tseries),1)';
     pulse_structure(rec_index).data_around_pulse_angle_only = repmat(data_around_pulse_angle_only,length(recording.tseries),1)';
 
+   
+
+    
+    
     pulse_structure(rec_index).data_around_pulse = data_around_pulse_dfoverf';
     pulse_structure(rec_index).data_around_pulse_mean = data_around_pulse_dfoverf_mean';
     pulse_structure(rec_index).data_around_pulse_fo_is_mean = data_around_pulse_dfoverf_fo_is_mean';
@@ -438,7 +448,9 @@ for rec_index = 1:1:length(recordings_list)
     pulse_structure(rec_index).pulse_index = all_pulse_listindex;
     pulse_structure(rec_index).ROI_used = all_ROI_index;
     
-    
+         pulse_structure(rec_index).cell_ID = all_cellID_list;
+    pulse_structure(rec_index).fly_ID = all_flyID_list;
+
     corr_structure(rec_index).recording = recordings_list(rec_index);
     
     

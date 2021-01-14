@@ -1,6 +1,6 @@
 % this code is meant to help get the right ROIs for anaysis
 % ROIsSS53469 is the imported table (from xlx using string)
-function [rec_list, ROI_list] = import_ROI_names_SS53469_2cells(ROIsSS53469, whatdoyouwant)
+function [rec_list, ROI_list, fly_ID, cell_ID] = import_ROI_names_SS53469_2cells(ROIsSS53469, whatdoyouwant)
 
 %function [recording] = make_small_recording_group()
 % these are all SS53469 includes dual imaging with SS01048 and
@@ -44,7 +44,29 @@ recording_list = {'2019_06_10_0000.mat','2019_06_10_0001.mat','2019_06_10_0002.m
     '2019_12_19_0003.mat','2019_12_19_0004.mat','2019_12_19_0005.mat',...
     '2019_12_13_0000.mat','2019_12_13_0001.mat','2019_12_13_0002.mat','2019_12_13_0003.mat',...
     '2019_11_18_0002.mat',...
-    '2019_11_14_0001.mat','2019_11_14_0002.mat','2019_11_14_0003.mat'};
+    '2019_11_14_0001.mat','2019_11_14_0002.mat','2019_11_14_0003.mat',...
+    '2020_06_22_0000.mat',...
+    '2020_06_22_0001.mat',...
+    '2020_06_23_0000.mat',...
+    '2020_06_23_0002.mat',...
+    '2020_06_23_0003.mat',...
+    '2020_06_24_0000.mat',...
+    '2020_06_24_0001.mat',...
+    '2020_06_24_0002.mat',...
+    '2020_06_24_0003.mat',...
+    '2020_07_20_0000.mat',...
+    '2020_07_20_0001.mat',...
+    '2020_07_20_0002.mat',...
+    '2020_07_20_0003.mat',...
+    '2020_07_20_0004.mat',...
+    '2020_07_20_0005.mat',...
+    '2020_07_21_0000.mat',...
+    '2020_07_21_0001.mat',...
+    '2020_07_21_0002.mat',...
+    '2020_07_21_0003.mat',...
+    '2020_07_21_0004.mat',...
+    '2020_07_21_0005.mat',...
+    '2020_07_21_0006.mat'};
 
 % imported ROIsSS53469 as string
 
@@ -58,6 +80,8 @@ for i = 1:1:length(recording_list)
     ROI(i).leftneck = str2num(ROIsSS53469(i,7));
     ROI(i).rightneck = str2num(ROIsSS53469(i,8));
     ROI(i).combinedneck = str2num(ROIsSS53469(i,9));
+    ROI(i).cellID = str2num(ROIsSS53469(i,11));
+    ROI(i).flyID = str2num(ROIsSS53469(i,12));
     
     %
     %     if(isempty(ROI(i).leftcell))
@@ -95,44 +119,55 @@ ROI_list = [];
 rec_list = [];
 cnt = 0;
 
-if(strcmp(whatdoyouwant,'2brightcell'))  
+if(strcmp(whatdoyouwant,'2brightcell'))
     for i = 1:1:length(recording_list)
-        if( (length(ROI(i).leftcell) > 0) && (length(ROI(i).rightcell) >0)) 
+        if( (length(ROI(i).leftcell) > 0) && (length(ROI(i).rightcell) >0))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcell(1);
+               cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcell(1);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
-
     end
- 
 end
 
 
-if(strcmp(whatdoyouwant,'2brightanddim'))   
+if(strcmp(whatdoyouwant,'2brightanddim'))
     for i = 1:1:length(recording_list)
-        if( (length(ROI(i).leftcell) > 0) && (length(ROI(i).leftcelldim) >0)) 
+        if( (length(ROI(i).leftcell) > 0) && (length(ROI(i).leftcelldim) >0))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcell(1);
+               cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).leftcelldim(1);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
         end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
 
-                if( (length(ROI(i).rightcell) > 0) && (length(ROI(i).rightcelldim) >0)) 
+        if( (length(ROI(i).rightcell) > 0) && (length(ROI(i).rightcelldim) >0))
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcell(1);
+               cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
             cnt = cnt+1;
             rec_list{cnt} = char(recording_list(i));
             ROI_list(cnt) = ROI(i).rightcelldim(1);
-                end
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
         
     end
- 
+    
 end
 
 ROI_names =ROI;

@@ -44,11 +44,20 @@ recording.abf.no_laser(a) = 1;
 %10000 is 1 second
 %recording.abf.no_laser = causal_filter(200000, recording.abf.no_laser );
 
+% 25 seconds after pulse ends is removed
+% this looks complicated because I need to causual filter a subsampled
+% signal otherwise it takes too long
+recording.abf.no_laser25 = causal_filter(2500, recording.abf.no_laser(1:100:end));
+recording.abf.no_laser25 = interp1(recording.abf.Time_s(1:100:end), recording.abf.no_laser25, recording.abf.Time_s,'previous');
+
 % 100 seconds after pulse ends is removed
 % this looks complicated because I need to causual filter a subsampled
 % signal otherwise it takes too long
 recording.abf.no_laser = causal_filter(10000, recording.abf.no_laser(1:100:end));
 recording.abf.no_laser = interp1(recording.abf.Time_s(1:100:end), recording.abf.no_laser, recording.abf.Time_s,'previous');
+
+
+
 
 % no laser 2 is ones when there is laser, 0 otherwise
 recording.abf.no_laser2(recording.abf.no_laser > 0) = 1;
@@ -57,6 +66,8 @@ recording.abf.no_laser2(recording.abf.no_laser > 0) = 1;
 recording.abf.no_laser(recording.abf.no_laser > 0) = NaN;
 recording.abf.no_laser(recording.abf.no_laser == 0) = 1;
 
+recording.abf.no_laser25(recording.abf.no_laser25 > 0) = NaN;
+recording.abf.no_laser25(recording.abf.no_laser25 == 0) = 1;
 
 % find eggs without pulses close by (60 seconds before)
  recording.movie1.eggs_with_pulse = [];

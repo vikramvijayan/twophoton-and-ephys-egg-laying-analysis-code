@@ -1,4 +1,4 @@
-function [transition_structure, transition_structure_notperfly] = group_plot_signal_at_transitions_uptodate(recordings_list, ROI_num, filter_out_chrimson_data, filter_out_egg_times, backsub)
+function [transition_structure, transition_structure_notperfly] = group_plot_signal_at_transitions_uptodate(recordings_list, ROI_num, fly_ID, cell_ID,filter_out_chrimson_data, filter_out_egg_times, backsub)
 % ROI_num = -1 use patch
 %% plot signal after transitions
 
@@ -81,9 +81,13 @@ transition_structure_notperfly.s200_to_s500_median_proboscis   = [];
 
 
 for rec_index = 1:1:length(recordings_list)
-    modifiedStr = strrep([char(recordings_list(rec_index))], '.mat', '_stripped.mat');
-    modifiedStr2 = strrep([char(recordings_list(rec_index))], '.mat', '_stripped_new_dlc_track.mat');
     
+    tf = strfind([char(recordings_list(rec_index))],'spikes');
+  modifiedStr2 = [char(recordings_list(rec_index))];
+    if(isempty(tf))
+        modifiedStr = strrep([char(recordings_list(rec_index))], '.mat', '_stripped.mat');
+        modifiedStr2 = strrep([char(recordings_list(rec_index))], '.mat', '_stripped_new_dlc_track.mat');
+    end
     if(exist([modifiedStr2]))
         modifiedStr = modifiedStr2;
     end
@@ -104,6 +108,11 @@ for rec_index = 1:1:length(recordings_list)
     if(backsub == 1)
         [recording] = replace_df_over_f_withbackgroundsubtracted(recording);
     end
+
+  if(backsub == 2)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmean(recording);
+    end
+
         
     cntr = 0;
     cell_store_trans = {};
@@ -189,8 +198,13 @@ for rec_index = 1:1:length(recordings_list)
             end
             
             if(patch == 1)
-                [time_base_to_return, data_to_average_interp] = average_around_event(recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.movie1.time_stamps(b(i)), (startt:.01:stopt)-recording.movie1.time_stamps(b(i)));
-                data_to_average_interp_fo_is_mean = data_to_average_interp;
+               % [time_base_to_return, data_to_average_interp] = average_around_event(recording.abf.CH1_patch(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13, recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.movie1.time_stamps(b(i)), (startt:.01:stopt)-recording.movie1.time_stamps(b(i)));
+
+               %[time_base_to_return, data_to_average_interp] = average_around_event(10000.*recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.movie1.time_stamps(b(i)), (startt:.01:stopt)-recording.movie1.time_stamps(b(i)));
+               recording.abf.CH1_patch_spikes_removed = smoothdata(recording.abf.CH1_patch_spikes_removed,'movmean',500);
+               [time_base_to_return, data_to_average_interp] = average_around_event(recording.abf.CH1_patch_spikes_removed(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13, recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.movie1.time_stamps(b(i)), (startt:.01:stopt)-recording.movie1.time_stamps(b(i)));
+
+               data_to_average_interp_fo_is_mean = data_to_average_interp;
                 data_to_average_interp_mean = data_to_average_interp;
                 data_to_average_interp = data_to_average_interp;
             end
@@ -321,6 +335,10 @@ for rec_index = 1:1:length(recordings_list)
         store_trans_moredetails(r,5) =  store_trans(r,2)-last200p;
         store_trans_moredetails(r,6) =  store_trans(r,2)-last500p;
         
+        
+        store_trans_moredetails(r,7) =  cell_ID(rec_index);
+        store_trans_moredetails(r,8) =  fly_ID(rec_index);
+
         if(recording.movie1.sucrose(store_trans(r,2)) == 200 && recording.movie1.sucrose(store_trans(r,2)-1) == 0)
             p_to_s200 = [p_to_s200, r];
         end
@@ -346,6 +364,10 @@ for rec_index = 1:1:length(recordings_list)
         end  
     end
     
+     transition_structure(rec_index).fly_ID = fly_ID(rec_index);
+        transition_structure(rec_index).cell_ID = cell_ID(rec_index);
+
+        
     transition_structure(rec_index).s200_to_p = nanmean(out_signal(s200_to_p,:),1)';
     transition_structure(rec_index).p_to_s200 = nanmean(out_signal(p_to_s200,:),1)';
     transition_structure(rec_index).s500_to_p = nanmean(out_signal(s500_to_p,:),1)';

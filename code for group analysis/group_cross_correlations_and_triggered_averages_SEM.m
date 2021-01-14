@@ -1,4 +1,4 @@
-function [corr_structure,egg_structure] = group_cross_correlations_and_triggered_averages_SEM(recordings_list, ROI_num, filter_out_chrimson_data, filter_chrimson_eggs, filter_out_egg_times, backsub)
+function [corr_structure,egg_structure] = group_cross_correlations_and_triggered_averages_SEM(recordings_list, ROI_num, fly_ID, cell_ID, filter_out_chrimson_data, filter_chrimson_eggs, filter_out_egg_times, backsub)
 
 %% note that signal over mean is being currently used to calculate cross correlations
 
@@ -32,9 +32,14 @@ for rec_index = 1:1:length(recordings_list)
     
     % it is often faster to use the stripped files without the associated
     % images
+ tf = strfind([char(recordings_list(rec_index))],'spikes');
+  modifiedStr2 = [char(recordings_list(rec_index))];
+
+if(isempty(tf))
     modifiedStr = strrep([char(recordings_list(rec_index))], '.mat', '_stripped.mat');
     modifiedStr2 = strrep([char(recordings_list(rec_index))], '.mat', '_stripped_new_dlc_track.mat');
-    
+    end
+
     if(exist([modifiedStr2]))
         modifiedStr = modifiedStr2;
     end
@@ -44,6 +49,14 @@ for rec_index = 1:1:length(recordings_list)
     if(backsub == 1)
         [recording] = replace_df_over_f_withbackgroundsubtracted(recording);
     end
+    
+        if(backsub == 2)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmean(recording);
+        end
+        
+          if(backsub == 3)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmean2(recording);
+        end
     
     if(ROI_num(rec_index) ==-1)
         patch = 1;
@@ -254,7 +267,9 @@ for rec_index = 1:1:length(recordings_list)
     all_eggs_listtime = repmat(all_eggt,length(recording.tseries),1);
     all_recordings_list_index = repmat(rec_index,length(recording.tseries),1);
     all_ROI_index = repmat(ROI_num(rec_index),length(recording.tseries),1);
-    
+    all_cellID_list = repmat(cell_ID(rec_index),length(recording.tseries),1);
+    all_flyID_list = repmat(fly_ID(rec_index),length(recording.tseries),1);
+
     for m = 1:1:length(recording.tseries)
         if(patch == 0)
             signal    = recording.tseries(m).df_over_f(ROI_num(rec_index),:);
@@ -275,13 +290,15 @@ for rec_index = 1:1:length(recordings_list)
                 tseries_no_egg = interp1(recording.movie1.time_stamps, recording.movie1.no_egg, recording.tseries(m).Time_s,'previous');
                 signal = signal.*tseries_no_egg';
                 signal_over_mean = signal_over_mean.*tseries_no_egg';
-                signal_fo_is_mean = signal_over_mean.*tseries_no_laser'; 
+                signal_fo_is_mean = signal_over_mean.*tseries_no_egg';
             end
         end
         
         %% for patching data, the signal changes
         if(patch == 1)
-            signal    = recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+            %signal    = recording.abf.CH1_patch(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13;
+            %signal    = 10000.*recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+            signal    = recording.abf.CH1_patch_spikes_removed(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13;
             signaltime = recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
             
             if(filter_out_chrimson_data)
@@ -308,81 +325,81 @@ for rec_index = 1:1:length(recordings_list)
         %% compute correlations to signal
         
         % look at signal correlated to velocity (smoothed)
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, wheelvelocity, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, wheelvelocity, signaltime, movtime, time_interval_corr);
         corr_to_vel = [corr_to_vel; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, wheelvelocity_noave, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, wheelvelocity_noave, signaltime, movtime, time_interval_corr);
         corr_to_vel_noave = [corr_to_vel_noave; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, speed_2hz_hold, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, speed_2hz_hold, signaltime, movtime, time_interval_corr);
         corr_to_speed_2hz_hold = [corr_to_speed_2hz_hold; out_corr];
         
         % look at signal correlated to body position
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, problength, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, problength, signaltime, movtime, time_interval_corr);
         corr_to_prob = [corr_to_prob; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, prob_x, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, prob_x, signaltime, movtime, time_interval_corr);
         corr_to_prob_x = [corr_to_prob_x; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, prob_y, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, prob_y, signaltime, movtime, time_interval_corr);
         corr_to_prob_y = [corr_to_prob_y; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, bodylength, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength, signaltime, movtime, time_interval_corr);
         corr_to_body = [corr_to_body; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, bodylength_x, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength_x, signaltime, movtime, time_interval_corr);
         corr_to_body_x = [corr_to_body_x; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, bodylength_y, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodylength_y, signaltime, movtime, time_interval_corr);
         corr_to_body_y = [corr_to_body_y; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, bodyangle, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, bodyangle, signaltime, movtime, time_interval_corr);
         corr_to_angle = [corr_to_angle; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, abd_path_length, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_path_length, signaltime, movtime, time_interval_corr);
         corr_to_body_path = [corr_to_body_path; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, abd_only_length, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length, signaltime, movtime, time_interval_corr);
         corr_to_body_only = [corr_to_body_only; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, abd_only_length_x, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length_x, signaltime, movtime, time_interval_corr);
         corr_to_body_only_x = [corr_to_body_only_x; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, abd_only_length_y, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_length_y, signaltime, movtime, time_interval_corr);
         corr_to_body_only_y = [corr_to_body_only_y; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, abd_only_angle, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, abd_only_angle, signaltime, movtime, time_interval_corr);
         corr_to_angle_only = [corr_to_angle_only; out_corr];
         
         % look at signal correlated to substrate
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, sucrose, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, sucrose, signaltime, movtime, time_interval_corr);
         corr_to_sucrose = [corr_to_sucrose; out_corr];
         
         % look at signal correlated to substrate threshold
         suc_thr = sucrose;
         suc_thr(suc_thr>0) = 1;
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, suc_thr, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, suc_thr, signaltime, movtime, time_interval_corr);
         corr_to_sucrose_t = [corr_to_sucrose_t; out_corr];
         
         % look at signal correlated to egg
         tmp_ar = zeros(1,length(movtime));
         tmp_ar(all_egg) = 1;
         tmp_ar = smooth(tmp_ar,25*10);
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, tmp_ar, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, time_interval_corr);
         corr_to_egg = [corr_to_egg; out_corr];
         
         % look at signal correlated to plain egg
         tmp_ar = zeros(1,length(movtime));
         tmp_ar(plain_egg) = 1;
         tmp_ar = smooth(tmp_ar,25*10);
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, tmp_ar, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, time_interval_corr);
         corr_to_plainegg = [corr_to_plainegg; out_corr];
         
         % look at signal correlated to sucrose egg
         tmp_ar = zeros(1,length(movtime));
         tmp_ar(sucrose_egg) = 1;
         tmp_ar = smooth(tmp_ar,25*10);
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean, tmp_ar, signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal, tmp_ar, signaltime, movtime, time_interval_corr);
         corr_to_sucroseegg = [corr_to_sucroseegg; out_corr];
         
         % look at signal correlated to transition (since behavior cam is 25 fps, transition is defined as 5 seconds
@@ -400,10 +417,10 @@ for rec_index = 1:1:length(recordings_list)
         transitionssigned(b) = -1;
         transitionssigned = smooth(transitionssigned,10*25);
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean,[0;transitionssigned], signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal,[0;transitionssigned], signaltime, movtime, time_interval_corr);
         corr_to_trans = [corr_to_trans; out_corr];
         
-        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal_over_mean,[0;transitionsabsval], signaltime, movtime, time_interval_corr);
+        [out_corr,out_corr_shift_ofvec1] = regular_xcorr(signal,[0;transitionsabsval], signaltime, movtime, time_interval_corr);
         corr_to_absvaltrans = [corr_to_absvaltrans; out_corr];
     end
     
@@ -428,7 +445,7 @@ for rec_index = 1:1:length(recordings_list)
    
     
     
-    egg_structure(rec_index).data_around_egg_fo = data_around_egg_dfoverf';
+    egg_structure(rec_index).data_around_egg = data_around_egg_dfoverf';
     egg_structure(rec_index).data_around_egg_mean = data_around_egg_dfoverf_mean';
     egg_structure(rec_index).data_around_egg_fo_is_mean = data_around_egg_dfoverf_fo_is_mean';
 
@@ -440,7 +457,12 @@ for rec_index = 1:1:length(recordings_list)
     egg_structure(rec_index).egg_index = all_eggs_listindex;
     egg_structure(rec_index).ROI_used = all_ROI_index;
     
-    
+    egg_structure(rec_index).cell_ID = all_cellID_list;
+    egg_structure(rec_index).fly_ID = all_flyID_list;
+
+    corr_structure(rec_index).fly_ID = fly_ID(rec_index);
+    corr_structure(rec_index).cell_ID = cell_ID(rec_index);
+
     corr_structure(rec_index).recording = recordings_list(rec_index);
     corr_structure(rec_index).recording_index = rec_index;
     corr_structure(rec_index).ROI_used = ROI_num(rec_index);

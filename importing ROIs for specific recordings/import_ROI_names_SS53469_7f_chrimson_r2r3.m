@@ -1,0 +1,341 @@
+% this code is meant to help get the right ROIs for anaysis
+% ROIsSS53469 is the imported table (from xlx using string)
+function [rec_list, ROI_list, fly_ID, cell_ID] = import_ROI_names_SS53469_7f_chrimson_r2r3(ROIsSS53469, whatdoyouwant)
+
+%function [recording] = make_small_recording_group()
+
+%  SS53469 descending neurons with chrimson and Gcamp7f
+recording_list = {'2020_06_25_0000.mat',...
+    '2020_06_25_0001.mat',...
+    '2020_06_25_0002.mat',...
+    '2020_06_25_0003.mat',...
+    '2020_06_25_0004.mat',...
+    '2020_06_25_0005.mat',...
+    '2020_06_26_0000.mat',...
+    '2020_06_26_0001.mat',...
+    '2020_06_26_0002.mat',...
+    '2020_06_26_0003.mat',...
+    '2020_06_26_0005.mat',...
+    '2020_06_30_0000.mat',...
+    '2020_06_30_0001.mat',...
+    '2020_06_30_0003.mat',...
+    '2020_06_30_0004.mat',...
+    '2020_07_16_0000.mat',...
+    '2020_07_16_0001.mat',...
+    '2020_07_16_0002.mat',...
+    '2020_07_16_0003.mat',...
+    '2020_07_16_0004.mat',...
+    '2020_07_16_0005.mat',...
+    '2020_07_16_0006.mat',...
+    '2020_07_16_0007.mat',...
+    '2020_07_17_0000.mat',...
+    '2020_07_17_0002.mat',...
+    '2020_07_17_0003.mat',...
+    '2020_07_22_0000.mat',...
+    '2020_07_22_0001.mat',...
+    '2020_07_22_0002.mat',...
+    '2020_07_22_0003.mat',...
+    '2020_07_22_0004.mat',...
+    '2020_07_22_0005.mat',...
+    '2020_07_23_0000.mat',...
+    '2020_07_23_0001.mat',...
+    '2020_07_23_0002.mat',...
+    '2020_07_23_0003.mat',...
+    '2020_07_23_0005.mat',...
+    '2020_07_23_0006.mat',...
+    '2020_07_23_0007.mat',...
+    '2020_07_24_0000.mat',...
+    '2020_07_24_0001.mat',...
+    '2020_07_24_0002.mat',...
+    '2020_07_24_0003.mat',...
+    '2020_07_24_0004.mat'};
+
+
+% imported ROIsSS53469 as string
+
+for i = 1:1:length(recording_list)
+    ROI(i).leftcell = str2num(ROIsSS53469(i,1));
+    ROI(i).rightcell = str2num(ROIsSS53469(i,2));
+    ROI(i).leftcelldim = str2num(ROIsSS53469(i,3));
+    ROI(i).rightcelldim = str2num(ROIsSS53469(i,4));
+    ROI(i).leftneurite = str2num(ROIsSS53469(i,5));
+    ROI(i).rightneurite = str2num(ROIsSS53469(i,6));
+    ROI(i).leftneck = str2num(ROIsSS53469(i,7));
+    ROI(i).rightneck = str2num(ROIsSS53469(i,8));
+    ROI(i).combinedneck = str2num(ROIsSS53469(i,9));
+    ROI(i).cellID = str2num(ROIsSS53469(i,11));
+    ROI(i).flyID = str2num(ROIsSS53469(i,12));
+    
+    %
+    %     if(isempty(ROI(i).leftcell))
+    %         ROI(i).leftcell = 0;
+    %     end
+    %     if(isempty(ROI(i).rightcell))
+    %         ROI(i).rightcell = 0;
+    %     end
+    %     if(isempty(ROI(i).leftcelldim))
+    %         ROI(i).leftcelldim = 0;
+    %     end
+    %     if(isempty(ROI(i).rightcelldim))
+    %         ROI(i).rightcelldim = 0;
+    %     end
+    %     if(isempty(ROI(i).leftneurite))
+    %         ROI(i).leftneurite = 0;
+    %     end
+    %     if(isempty(ROI(i).rightneurite))
+    %         ROI(i).rightneurite = 0;
+    %     end
+    %     if(isempty(ROI(i).leftneck))
+    %         ROI(i).leftneck = 0;
+    %     end
+    %     if(isempty(ROI(i).rightneck))
+    %         ROI(i).rightneck = 0;
+    %     end
+    %     if(isempty(ROI(i).combinedneck))
+    %         ROI(i).combinedneck = 0;
+    %     end
+    %
+end
+
+
+ROI_list = [];
+rec_list = [];
+cnt = 0;
+
+if(strcmp(whatdoyouwant,'cell'))
+    for i = 1:1:length(recording_list)
+        for j = 1:1:length(ROI(i).leftcell)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        for j = 1:1:length(ROI(i).rightcell)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        for j = 1:1:length(ROI(i).leftcelldim)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        for j = 1:1:length(ROI(i).rightcelldim)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+    end
+end
+
+
+if(strcmp(whatdoyouwant,'only_one_cell'))
+    for i = 1:1:length(recording_list)
+        cell_taken = 0;
+        for j = 1:1:length(ROI(i).leftcell)
+            if(cell_taken == 0)
+                cnt = cnt+1;
+                rec_list{cnt} = char(recording_list(i));
+                ROI_list(cnt) = ROI(i).leftcell(j);
+                cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
+            end
+        end
+        for j = 1:1:length(ROI(i).rightcell)
+            if(cell_taken == 0)
+                cnt = cnt+1;
+                rec_list{cnt} = char(recording_list(i));
+                ROI_list(cnt) = ROI(i).rightcell(j);
+                cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
+            end
+        end
+        for j = 1:1:length(ROI(i).leftcelldim)
+            if(cell_taken == 0)
+                cnt = cnt+1;
+                rec_list{cnt} = char(recording_list(i));
+                ROI_list(cnt) = ROI(i).leftcelldim(j);
+                cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
+            end
+        end
+        for j = 1:1:length(ROI(i).rightcelldim)
+            if(cell_taken == 0)
+                cnt = cnt+1;
+                rec_list{cnt} = char(recording_list(i));
+                ROI_list(cnt) = ROI(i).rightcelldim(j);
+                cell_taken=1;
+                cell_ID(cnt) = ROI(i).cellID(1);
+                fly_ID(cnt) = ROI(i).flyID(1);
+            end
+        end
+    end
+end
+
+
+
+if(strcmp(whatdoyouwant,'anyleftcell'))
+    for i = 1:1:length(recording_list)
+        for j = 1:1:length(ROI(i).leftcell)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
+        for j = 1:1:length(ROI(i).leftcelldim)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
+    end
+end
+
+if(strcmp(whatdoyouwant,'anyrightcell'))
+    for i = 1:1:length(recording_list)
+        for j = 1:1:length(ROI(i).rightcell)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
+        for j = 1:1:length(ROI(i).rightcelldim)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
+    end
+end
+
+
+if(strcmp(whatdoyouwant,'anybrightcell'))
+    for i = 1:1:length(recording_list)
+        for j = 1:1:length(ROI(i).rightcell)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1) = ROI(i).cellID(1)+1e6;
+        
+        for j = 1:1:length(ROI(i).leftcell)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftcell(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+    end
+end
+
+if(strcmp(whatdoyouwant,'anydimcell'))
+    for i = 1:1:length(recording_list)
+        for j = 1:1:length(ROI(i).rightcelldim)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        for j = 1:1:length(ROI(i).leftcelldim)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftcelldim(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+    end
+end
+
+if(strcmp(whatdoyouwant,'anyneckside'))
+    for i = 1:1:length(recording_list)
+        for j = 1:1:length(ROI(i).rightneck)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightneck(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
+        for j = 1:1:length(ROI(i).leftneck)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftneck(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+    end
+end
+
+if(strcmp(whatdoyouwant,'anyneurite'))
+    for i = 1:1:length(recording_list)
+        for j = 1:1:length(ROI(i).rightneurite)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).rightneurite(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+        
+        for j = 1:1:length(ROI(i).leftneurite)
+            cnt = cnt+1;
+            rec_list{cnt} = char(recording_list(i));
+            ROI_list(cnt) = ROI(i).leftneurite(j);
+            cell_ID(cnt) = ROI(i).cellID(1);
+            fly_ID(cnt) = ROI(i).flyID(1);
+        end
+        ROI(i).cellID(1)= ROI(i).cellID(1)+1e6;
+        
+    end
+end
+
+ROI_names =ROI;
+
+end

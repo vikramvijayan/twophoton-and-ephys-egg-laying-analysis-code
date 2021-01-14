@@ -1,4 +1,4 @@
-function [filter_structure] = group_pass_filter(recordings_list, ROI_num, filter_out_chrimson_data, filter_out_egg_times, backsub)
+function [filter_structure] = group_pass_filter(recordings_list, ROI_num, fly_ID, cell_ID, filter_out_chrimson_data, filter_out_egg_times, backsub)
 % this function just returns all the data back with .1 interpolation
 % can be used to filter signal to find egg-laying like events etc
 
@@ -32,6 +32,14 @@ for rec_index = 1:1:length(recordings_list)
         [recording] = replace_df_over_f_withbackgroundsubtracted(recording);
     end
     
+       if(backsub == 2)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmean(recording);
+        end
+        
+          if(backsub == 3)
+        [recording] = replace_df_over_f_withbackgroundsubtracted_runningmean2(recording);
+          end
+        
     if(ROI_num(rec_index) ==-1)
         patch = 1;
     else
@@ -186,9 +194,10 @@ for rec_index = 1:1:length(recordings_list)
         filter_structure(rec_index).tseries(m).eggs_vector = interp1(movtime, eggs_vector, signaltime(1):.1:signaltime(end));
         filter_structure(rec_index).tseries(m).filtered_wheel = interp1(movtime, filtered_wheel, signaltime(1):.1:signaltime(end));
         filter_structure(rec_index).tseries(m).speed_2hz_hold = interp1(movtime, speed_2hz_hold, signaltime(1):.1:signaltime(end));
-
         
-        filter_structure(rec_index).recording = recordings_list(rec_index);
+        filter_structure(rec_index).fly_ID = fly_ID(rec_index);
+        filter_structure(rec_index).cell_ID = cell_ID(rec_index);
+        
         filter_structure(rec_index).recording = recordings_list(rec_index);
         filter_structure(rec_index).recording_index = rec_index;
         filter_structure(rec_index).ROI_used = ROI_num(rec_index);

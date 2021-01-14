@@ -11,7 +11,7 @@ function [out] = plot_signal_at_transitions(recording, ROI_num, filter_out_chrim
 
   if(ROI_num ==-1)
         patch = 1;
-        recording.tseries = [];
+        recording.tseries = 1;
     else
         patch = 0;
   end
@@ -44,7 +44,8 @@ for ts = 1:1:length(recording.tseries)
         end
         
         if(patch ==1)
-            [time_base_to_return, data_to_average_interp] = average_around_event(recording.abf.CH1_patch_spikes_conv(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.movie1.time_stamps(b(i)), (startt:.01:stopt)-recording.movie1.time_stamps(b(i)));
+            [time_base_to_return, data_to_average_interp] = average_around_event(recording.abf.CH1_patch(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13, recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.movie1.time_stamps(b(i)), (startt:.01:stopt)-recording.movie1.time_stamps(b(i)));
+                    [time_base_to_return, data_to_average_interp] = average_around_event(recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000)), recording.movie1.time_stamps(b(i)), (startt:.01:stopt)-recording.movie1.time_stamps(b(i)));
         end
         
         if(patch ==0 && filter_out_chrimson_data == 1)

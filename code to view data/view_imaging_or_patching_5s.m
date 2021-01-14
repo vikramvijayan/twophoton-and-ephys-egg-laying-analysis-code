@@ -269,9 +269,15 @@ if(handles.patch ==1)
     %tseries = handles.recording.tseries(handles.tseries_for_plot);
     
     axes(handles.axes3);  hold on;
-    plot(handles.recording.abf.Time_s(1:100:end), 10000.*handles.recording.abf.CH1_patch_spikes_conv_rect(1:100:end))
-    ylabel('ROIs','fontsize', 8);
-    set(gca,'ylim',[0 (max(10000.*handles.recording.abf.CH1_patch_spikes_conv_rect)+5)]);
+
+    %plot(handles.recording.abf.Time_s(1:100:end), 10000.*handles.recording.abf.CH1_patch_spikes_conv_area_rect(1:100:end),'k');
+    %set(gca,'ylim',[0 (max(10000.*handles.recording.abf.CH1_patch_spikes_conv_area_rect)+5)]);
+
+    plot(handles.recording.abf.Time_s(1:10:end), handles.recording.abf.CH1_patch(1:10:end)-13,'k');
+    set(gca,'ylim',[(min(handles.recording.abf.CH1_patch(handles.time_st*10000:handles.time_en*10000))-18) (max(handles.recording.abf.CH1_patch(handles.time_st*10000:handles.time_en*10000))-8)]);
+
+    ylabel('Vm','fontsize', 8);
+
     set(gca,'xlim',[handles.time_st, handles.time_en]);
     set(gca,'TickDir','out')
     set(gca,'TickLength',[0.004 0.004]);
@@ -317,7 +323,8 @@ scatter(handles.recording.movie1.time_stamps(handles.recording.movie1.eggs), rec
 %line([handles.recording.movie1.time_stamps(handles.recording.movie1.eggs), handles.recording.movie1.time_stamps(handles.recording.movie1.eggs)], [-2 6],'color','r');
 scatter([handles.recording.movie1.time_stamps(handles.recording.movie1.eggs)], ones(1,length(handles.recording.movie1.eggs)).*-1,25,'r');
 
-behavior = [];
+% chrimson egg 202007170007
+behavior = [29689,29689,29689,29689,29689,33409,33820,29689];
 
 %behavior = [16075,17948,18348,20082,20270,20757,20761,20944;44292,44980,45800,46730,47075,47901,47982,48156;54738,55232,55736,56670,56760,57714,57773,57900;72718,73151,73655,74164,74168,75034,75560,75670;64070,64685,65233,66042,66054,66470,66963,67193;96344,96857,97318,98103,98911,99425,99769,99945;102472,103100,103613,104478,104605,105598,105612,105879;108118,108464,109095,109886,110134,110619,110619,110893;112893,113110,113638,114327,114693,116085,116117,116299;118694,118884,119896,120790,120877,122120,122120,122276;139915,140472,141146,141644,142421,143266,143266,143390];
 
@@ -325,18 +332,18 @@ behavior = [];
     
 
 
-% [numlines, ~] = size(behavior);
-% for i = 1:1:numlines
-%     line([handles.recording.movie1.time_stamps(behavior(i,1)), handles.recording.movie1.time_stamps(behavior(i,1))], [-2 16],'color',[216,191,216]./255);
-%     scatter([handles.recording.movie1.time_stamps(behavior(i,1))], recording.movie1.filtered_wheel(behavior(i,1)),25,[216,191,216]./255,'filled');
-%     
-%     
-%     line([handles.recording.movie1.time_stamps(behavior(i,6)), handles.recording.movie1.time_stamps(behavior(i,6))],[-2 16], 'color',[128,0,128]./255);
-%     scatter([handles.recording.movie1.time_stamps(behavior(i,6))], recording.movie1.filtered_wheel(behavior(i,6)),25,[128,0,128]./255,'filled');
-%     
-%     line([handles.recording.movie1.time_stamps(behavior(i,7)), handles.recording.movie1.time_stamps(behavior(i,7))],[-2 16], 'color','r');
-%     scatter([handles.recording.movie1.time_stamps(behavior(i,7))], [-1],25,'r','filled');
-% end
+[numlines, ~] = size(behavior);
+for i = 1:1:numlines
+    line([handles.recording.movie1.time_stamps(behavior(i,1)), handles.recording.movie1.time_stamps(behavior(i,1))], [-2 16],'color',[216,191,216]./255);
+    scatter([handles.recording.movie1.time_stamps(behavior(i,1))], recording.movie1.filtered_wheel(behavior(i,1)),25,[216,191,216]./255,'filled');
+    
+    
+    line([handles.recording.movie1.time_stamps(behavior(i,6)), handles.recording.movie1.time_stamps(behavior(i,6))],[-2 16], 'color',[128,0,128]./255);
+    scatter([handles.recording.movie1.time_stamps(behavior(i,6))], recording.movie1.filtered_wheel(behavior(i,6)),25,[128,0,128]./255,'filled');
+    
+    line([handles.recording.movie1.time_stamps(behavior(i,7)), handles.recording.movie1.time_stamps(behavior(i,7))],[-2 16], 'color','r');
+    scatter([handles.recording.movie1.time_stamps(behavior(i,7))], [-1],25,'r','filled');
+end
 
 
 set(gca,'TickDir','out');
@@ -344,10 +351,17 @@ set(gca,'xlim',[handles.recording.movie1.time_stamps(1), handles.recording.movie
 set(gca,'ylim',[0, 2*pi]);
 set(gca,'FontSize',8);
 set(gca,'TickLength',[0.004 0.004]);
+if(handles.patch == 0)
 set(gca,'xtick',[])
+end
 
 yyaxis right; hold on;
-plot(handles.recording.abf.Time_s, handles.recording.abf.PWMlaser_uWpermm2,'m');
+plot(handles.recording.abf.Time_s, handles.recording.abf.PWMlaser_uWpermm2,	'color',[0.9290, 0.6940, 0.1250]);
+%set(gca,'ytick',[])
+set(gca,'ycolor','k') 
+set(gca,'YTickLabel',[])
+%    plot(handles.recording.abf.Time_s(1:100:end), 10000.*handles.recording.abf.CH1_patch_spikes_conv_area_rect(1:100:end),'k');
+%    set(gca,'ylim',[max(0,min(10000.*handles.recording.abf.CH1_patch_spikes_conv_area_rect)-5) (max(10000.*handles.recording.abf.CH1_patch_spikes_conv_area_rect)+5)]);
 
 box on;
 
@@ -699,6 +713,11 @@ if(handles.first_run)
         end
     end
     
+    % add a dot for chrimson
+    if(handles.recording.abf.PWMlaser_uWpermm2(round((handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value))*10000))) > 1)
+        scatter(250,250,200,[0.9290, 0.6940, 0.1250],'filled');
+    end
+    
     axes(handles.axes6); hold on;
     %handles.movie_show = imagesc(flipud(vidFrame));
     handles.movie_show2 = imshow(vidFrame2,[handles.slidermin.Value, handles.slidermax.Value],'Colormap',gray(1000));
@@ -741,6 +760,11 @@ else
         if(handles.recording.movie1.DLC(i+2,index_of_frame) > .2)
             scatter(handles.recording.movie1.DLC(i,index_of_frame),handles.recording.movie1.DLC(i+1,index_of_frame),25,clrz(cnt,:),'filled');
         end
+    end
+    
+      % add a dot for chrimson
+  if(handles.recording.abf.PWMlaser_uWpermm2(round((handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value))*10000))) > 1)
+        scatter(250,250,200,[0.9290, 0.6940, 0.1250],'filled');
     end
     
     axes(handles.axes6); hold on; %cla('reset'); hold on;
@@ -813,16 +837,19 @@ end
 
 axes(handles.axes3);
 if(handles.patch ==0)
-    line([handles.recording.tseries(handles.tseries_for_plot).Time_s(closest_image),handles.recording.tseries(handles.tseries_for_plot).Time_s(closest_image)],[-10,10],'Color','m');
+    line([handles.recording.tseries(handles.tseries_for_plot).Time_s(closest_image),handles.recording.tseries(handles.tseries_for_plot).Time_s(closest_image)],[0,700],'Color','m');
 end
 if(handles.patch==1)
-    line([handles.recording.abf.Time_s(floor(closest_image)),handles.recording.abf.Time_s(floor(closest_image))],[-10,10],'Color','m');
+        set(handles.axes3,'xlim',[handles.recording.abf.Time_s(floor(closest_image))-10, handles.recording.abf.Time_s(floor(closest_image))+10]);
+axes(handles.axes3);
+line([handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value)),handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value))], [-200,200],'Color','m');
+
 end
 
 
 
 axes(handles.axes5);
-line([handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value)),handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value))], [-10,10],'Color','m');
+line([handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value)),handles.recording.movie1.time_stamps(ceil(handles.t_slider.Value))], [0,700],'Color','m');
 
 
 guidata(hObject, handles);

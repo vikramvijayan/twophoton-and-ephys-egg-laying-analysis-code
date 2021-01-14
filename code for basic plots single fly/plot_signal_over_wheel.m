@@ -6,10 +6,19 @@ signal_time_store = [];
 filtered_wheel_store = [];
 sucrose_store = [];
 
+if(ROI_num == -1)
+    recording.tseries = 1;
+end
 for i = 1:1:length(recording.tseries)
-    
+    if(ROI_num == -1)
+     signal_time = recording.abf.Time_s(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+        
+         signal    = recording.abf.CH1_patch(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000))-13;
+         signal    = recording.abf.CH1_patch_spikes_conv_area_rect(recording.time_to_use(1)*10000:100:floor(recording.time_to_use(2)*10000));
+    else
     signal      = recording.tseries(i).df_over_f(ROI_num,:);
     signal_time = recording.tseries(i).Time_s;
+    end
     interp_filt_wheel = interp1(recording.movie1.time_stamps, recording.movie1.filtered_wheel, signal_time,'previous');
     interp_sucrose = interp1(recording.movie1.time_stamps, recording.movie1.sucrose, signal_time,'previous');
     
